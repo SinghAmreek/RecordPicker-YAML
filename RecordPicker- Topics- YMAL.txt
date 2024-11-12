@@ -1,0 +1,123 @@
+//Referral YAML
+
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - Refer this account to Amreek Singh
+      - Refer Microsoft to user
+      - Create referral
+      - Refer
+
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_m07cUT
+      conditions:
+        - id: conditionItem_9UdhJk
+          condition: =CountRows(Global.PA_Copilot_DVRecordContext)<>2
+          actions:
+            - kind: SendActivity
+              id: sendActivity_1A78eK
+              activity: You need two contacts to create a referral.
+
+      elseActions:
+        - kind: SetVariable
+          id: setVariable_5XDaZR
+          variable: Topic.Contact1
+          value: =First(Global.PA_Copilot_DVRecordContext).RecordId
+
+        - kind: SetVariable
+          id: setVariable_04riGY
+          variable: Topic.Contact2
+          value: =Last(Global.PA_Copilot_DVRecordContext).RecordId
+
+        - kind: Question
+          id: question_Bfu2zj
+          interruptionPolicy:
+            allowInterruption: true
+
+          variable: init:Topic.reason
+          prompt: Please provide the reason
+          entity: StringPrebuiltEntity
+
+        - kind: InvokeFlowAction
+          id: invokeFlowAction_PQJUdu
+          input:
+            binding:
+              text: =Topic.Contact1
+              text_1: =Topic.Contact2
+              text_2: =Topic.reason
+
+          output:
+            binding:
+              output: Topic.Output
+
+          flowId: e993102d-367e-ef11-ac21-002248042e9b
+
+        - kind: SendActivity
+          id: sendActivity_8Kewvt
+          activity: "{Topic.Output}"
+
+    - kind: EndDialog
+      id: V5zCeo
+
+
+
+
+//BankTransactionWithRecordPicker YAML
+
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - Get Transactions
+      - Bank Transactions
+
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_oUksPs
+      conditions:
+        - id: conditionItem_ee6KTo
+          condition: =Global.PA__Copilot_Model_PageContext.pageContext.entityTypeName = "account"
+          actions:
+            - kind: SetVariable
+              id: setVariable_wrg9fG
+              variable: Global.recordId
+              value: =Global.PA__Copilot_Model_PageContext.pageContext.id.guid
+
+            - kind: BeginDialog
+              id: PWnuUr
+              input: {}
+              dialog: msdyn_salesCopilot.component.BankTransactions
+              output:
+                binding:
+                  outcome: Topic.outcome
+
+        - id: conditionItem_LTBIlY
+          condition: =First(Global.PA_Copilot_DVRecordContext).EntityName="account"
+          actions:
+            - kind: SetVariable
+              id: setVariable_9HXxtz
+              variable: Global.recordId
+              value: =First(Global.PA_Copilot_DVRecordContext).RecordId
+
+            - kind: BeginDialog
+              id: jVgbOa
+              input: {}
+              dialog: msdyn_salesCopilot.component.BankTransactions
+              output:
+                binding:
+                  outcome: Topic.outcome
+
+      elseActions:
+        - kind: SendActivity
+          id: sendActivity_CltB5e
+          activity: This prompt can only work on the account form.
+
+    - kind: EndDialog
+      id: 9WCC06
+
